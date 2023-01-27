@@ -13,16 +13,17 @@ public class Cart {
     private Long id;
     @Column
     private Long userId;
-    @JoinColumn(name = "fkproduct_id")
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JoinColumn(name = "fkcart_product_id")
     private List<Product> items;
 
     public Cart() {
     }
 
-    public Cart(Long userId){
-        this.userId = userId;
-        this.items = new ArrayList<>();
-    }
+//    public Cart(Long userId){
+//        this.userId = userId;
+//        this.items = new ArrayList<>();
+//    }
 
     public Cart(Long id, Long userId, List<Product> items) {
         this.id = id;
@@ -30,6 +31,10 @@ public class Cart {
         this.items = items;
     }
 
+    public Cart(Long userId, List<Product> items) {
+        this.userId = userId;
+        this.items = items;
+    }
 
     public void addItem(Product product){
         items.add(product);

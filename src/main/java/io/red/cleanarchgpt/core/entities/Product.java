@@ -6,12 +6,12 @@ import jakarta.persistence.*;
 @Table(name = "product")
 public class Product {
     @Id
-
-    private final Long id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     @Column
-    private final String name;
+    private String name;
     @Column
-    private final double price;
+    private double price;
 
     public Product() {
     }

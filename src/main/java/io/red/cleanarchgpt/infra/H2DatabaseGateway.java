@@ -1,35 +1,42 @@
 package io.red.cleanarchgpt.infra;
 
+import io.red.cleanarchgpt.app.controllers.responses.ProductResponse;
 import io.red.cleanarchgpt.core.entities.Cart;
 import io.red.cleanarchgpt.core.entities.Product;
+import io.red.cleanarchgpt.core.exceptions.ProductNotFoundException;
 import io.red.cleanarchgpt.core.gateway.ProductGateway;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
+import io.red.cleanarchgpt.infra.repositories.CartJpaRepository;
+import io.red.cleanarchgpt.infra.repositories.ProductJpaRepository;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
-@Repository
+@Component
 public class H2DatabaseGateway implements ProductGateway {
-    private final JdbcTemplate jdbcTemplate;
+    private final ProductJpaRepository productJpaRepository;
+    private final CartJpaRepository cartJpaRepository;
 
-    public H2DatabaseGateway(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    public H2DatabaseGateway(ProductJpaRepository productJpaRepository, CartJpaRepository cartJpaRepository) {
+        this.productJpaRepository = productJpaRepository;
+        this.cartJpaRepository = cartJpaRepository;
     }
 
-    public Product findById(Long id){
-        return jdbcTemplate.queryForObject("SELECT * FROM products WHERE id = ?",
-                new Object[] { id }, (rs, rowNum) ->
-                {
-                    return new Product(
-                            rs.getLong("id"),
-                            rs.getString("name"),
-                            rs.getDouble("price"));
-                });
+    @Override
+    public ProductResponse findById(Long id) {
+        Product product = productJpaRepository
+                .findById(id)
+                .orElseThrow(() -> new ProductNotFoundException("Invalid Product ID"));
+
+        return new ProductResponse(
+                product.getId(),
+                product.getName(),
+                product.getPrice()
+        );
     }
 
-    public void saveCart(Cart cart){
-        jdbcTemplate.update("INSERT INTO cart (user_id) VALUES (?)", cart.getUserId());
-        for(Product item: cart.getItems()){
-            jdbcTemplate.update("INSERT INTO cart_items (cart_id, product_id) VALUES (?, ?)",
-                    cart.getId());
-        }
+    @Override
+    public void saveCart(Cart cart) {
+        productJpaRepository.saveAll(cart.getItems());
+        cartJpaRepository.save(cart);
     }
+
 }
